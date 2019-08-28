@@ -517,3 +517,98 @@ strncpy(drone_four->flight_num, "DRN4", 4); // Remember > for dynamic alloc stru
 // Some kind of use of the data
 free(drone_four);
 ```
+
+## Array of Structs
+
+We can have arrays of *things*, and a `struct` is a *thing*, so it follows that we can have arrays of `struct`s.
+
+We could declare `FlightType drones[100];`, and then manipulate the contents of the array, say, `drones[42].altitude = 30000;`.
+
+*Note*: The `[]` and `.` operators have the same level of precedence.
+
+## Pointers to Structs
+
+If we have a pointer to a `struct` we can access the fields of the `struct` through the pointer with the `->` operator. The following are equivalent (where `p` is a pointer to a `struct` with a field `dat`): `p->dat = 5;` and `(*p).dat = 5;`.
+
+## Linked Lists
+
+A linked list is an ordered collection of nodes, each of which contains some data, connected with pointers.
+
++ Each node contains a pointer which points to the next node in the list
++ The first node is called the *head*
++ The last node is called the *tail*
+
+### Linked Lists vs. Arrays
+
+A linked list can only be accessed sequentially. For example, to find the 5th element, you need to traverse over the preceding four.
+
+Advantages of a linked list:
+
++ Dynamic size
++ Easy to add additional nodes as needed
++ Easy to add or remove nodes from the middle of the list (you can simply add or redirect links)
+
+Advantages of an array:
+
++ Has constant time access to arbitrary elements
+
+## Linked Lists -- A Guided Discussion
+
+*File*: `ll.c`.
+
+Let's work together to try to remember the logic of linked lists. We'll design an approach which allows us to
+
++ Create a node with a given integer value
++ Insert the node into a singly linked list, in ascending value order
++ Handle all of the cases
+
+![Adding and removing a node from a singly linked list.](images/LinkedList.png){ width=75% }
+
+## Debugging with High Level Languages
+
+With some basic code, let's see how we can debug it.
+
+Goals for debugging:
+
++ Examine and set values in memory
++ Execute portions of a program
++ Stop execution when and where desired
++ Trace and set breakpoints on statements and function calls
++ Examine and set variables
+
+## Types of Errors
+
+### Syntactic Errors
+
++ Input code is not legal
++ Caught by the compiler (or other translation mechanism)
++ Things like missing semicolon, variable which wasn't defined, etc.
+
+### Semantic Errors
+
++ Legal code, but not what the programmer intended
++ Not caught by the compiler because the syntax is correct and *how would it know what you really meant?*
++ Things like missing braces changing the body of a for loop
+
+### Algorithmic Errors
+
++ Problem with the logic of the program
++ Program does what it intended, but it doesn't solve the right problem
++ Typically difficult to find
+  + Many not show up for most runs of the program
+  + Border cases may cause your program to fail
++ Typically difficult to fix
+  + May have to redesign large portions of your code
+
+## Debugging Techniques
+
+### Ad-Hoc
+
++ Blindly adding `printf` statements
+  + Can cause more problems if you have memory bugs
+
+### Source-Level Debugger
+
++ Can examine and set variables
++ Can set breakpoints and step through
++ Can set watchpoints
