@@ -338,3 +338,182 @@ pi: 3.141590, 3.14, 3.141590e+00
 ```
 
 when executed.
+
+## printf Pitfals
+
+What happens when you forget a data argument, like in the statement `printf("a: %d, \'%c\', 0x%x\n", a, a);`?
+
+Each code (`%d`, `%x`, etc.) will convert whatever is on the stack (or register) where it expects that argument to be located. So you'll get *some* value... perhaps just not the one you wanted.
+
+Takeaway: *every register and each byte of RAM has a value*.
+
+## scanf Conversions
+
+For each conversion, `scanf` will skip whitespace characters and then read ASCII characters until it encounters rhe first character that should *not* be included in the converted value.
+
+Code | Stops when |
+:--: | :--------: |
+`%d` | Reads first non-digit |
+`%x` | Reads first non-digit |
+`%s` | Reads until first whitespace character |
+
+Data arguments *must be pointers* because `scanf` stores the converted value at the given memory address.
+
+## scanf
+
+*File*: `scan.c`.
+
+Reads ASCII characters from `stdin`, then:
+
+1. Matches characters to the next expected code in the format string
+2. Converts the matched characters according to the format
+3. Stores the converted values in the provided address
+   + Repeats until all codes have been read
+4. Returns the number of successful conversions
+
+### scanf Question
+
+Consider the following snippet:
+
+```c
+char name[100];
+int age, gnum;
+double gpa;
+scanf("%s %d/%d %lf", name, &age, &gnum, &gpa);
+printf("%s %d/%d %lf\n", name, age, gnum, gpa);
+```
+
+1. What will be printed out with this input: Kevin 73/123456 3.92
+
+    ```bash
+     $ ./scan
+     Kevin 73/123456 3.92
+     Kevin 73/123456 3.92
+    ```
+
+2. What will be printed out with this input: Kevin 73 123456 3.92
+
+    ```bash
+    $ ./scan
+    Kevin 73/123456 3.92
+    Kevin 73/0 0.00
+    ```
+
+## fgets and sscanf
+
+These are safer ways to get user input.
+
+It's better to read the entire input as a string using `fgets` and then parse it with `sscanf`.
+
+## Dynamic Allocation
+
+The standard C library provides a function for allocating memory at run-time to the heap. The function prototype is `void *malloc(int numBytes);`.
+
+It returns a generic pointer `void *` to a contiguous region of memory of the requested size (in bytes).
+
+The bytes are allocated from a region in memory called the heap.
+
++ The OS keeps track of chunks of memory from the heap that have been allocated
++ We'll be studying this system in depth this semester
+
+The standard C library also provides a function for deallocating memory at run-time from the heap. The function prototype is `void *free(void *);`.
+
+If data allocated by `malloc` is not freed, then over the course of your program, you could run out of heap memory.
+
++ This is called a *memory leak*
++ If this occurs, your program may crash
+
+## Data Structures
+
+A data structure is just a particular organization of data in memory
+
++ Group related items together
++ Organize data to be efficient to execute and convenient to program
+
+Data structures we'll examine in this class:
+
++ Arrays: contiguous, in memory, homogenous data types (special case product type)
++ Structs: grouped heterogeneous data types (product type)
++ Linked Lists: non-contiguous, dynamically allocated type (sum type)
+
+## Structs
+
+A `struct` lets you group different data together.
+
+As an example, let's represent a wireless packet containing drone data from flight:
+
+```c
+struct flight_type_t {
+  char flight_num[7];
+  int altitude; // In meters
+  int longitude; // In hundredths
+  int latitude; // In hundredths
+  int heading; // In radians
+  double speed; // In m/s
+};
+```
+
+A `struct` definition does not allocate memory.
+
+To allocate memory, we need to declare a variable:
+
+```c
+struct flight_type_t drone_one;
+struct flight_type_t drone_two;
+struct flight_type_t drone_three;
+drone_one.altitude = 10000;
+drone_one.longitude = -7730;
+```
+
+Our stack might then look like (where addresses near the top are higher, since this is a stack):
+
+Stack | Variable |
+:---: | :------: |
+$\vdots$ | $\vdots$ |
+-7730 | `drone_one.longitude` |
+10000 | `drone_one.altitude` |
+|     | `drone_one.flight_num[7]` |
+$\vdots$ | $\vdots$ |
+|     | `drone_one.flight_num[0]` |
+
+## typdef
+
+A `typedef` lets you declare a type synonym.
+
+The syntax is `typedef <type> <name>;`. As an example, we can make a `typedef` for the done data.
+
+```c
+typedef struct flight_type_t {
+  char flight_num[7];
+  int altitude; // In meters
+  int longitude; // In hundredths
+  int latitude; // In hundredths
+  int heading; // In radians
+  double speed; // In m/s
+} FlightType;
+```
+
+Declaring variables would then look like
+
+```c
+struct FlightType drone_one;
+struct FlightType drone_two;
+struct FlightType drone_three;
+drone_one.altitude = 10000;
+drone_one.longitude = -7730;
+```
+
+Notice that the use of the dot operator is unchanged.
+
+## Dynamic Allocation of Structs
+
+Generally, you'll put your struct allocations on the heap.
+
+```c
+// Some kind of setup
+FlightType *drone_four = NULL;
+drone_four = (FlightType *) malloc(sizeof(FLIGHT_TYPE)); // Cast the pointer!
+strncpy(drone_four->flight_num, "DRN4", 4); // Remember > for dynamic alloc structs drone_four->altitude = 10231;
+// Some kind of use of the data
+free(drone_four);
+```
