@@ -39,7 +39,7 @@ Reading homework:
    + Working with `struct`s and dynamic memory
    + Working with linked lists using dynamically allocated `struct`s
 
-## Lecutre Overview from CS262
+## Lecture Overview from CS262
 
 ![Lecture overview.](images/CReview.png){ width=100% }
 
