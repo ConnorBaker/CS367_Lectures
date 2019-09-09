@@ -215,9 +215,11 @@ Since we take an integer to be 32 bits, we must partition `x` into four buckets 
 
 ![`0x1234567` in both Big Endian (top) and Little Endian (bottom) orderings.](images/ByteOrderExample.png){ width=75% }
 
-As another example, if we run the following on Zeus, what will be printed?
+### Question 3
 
 *File*: `int_endian.c`
+
+As another example, if we run the following on Zeus, what will be printed?
 
 ```c
 int x = 0x1234567;
@@ -299,7 +301,7 @@ int sum(int x, int y) {
   + Seven total instructions
   + The instructions are 1, 2, or 3 bytes in length
 
-![A comparison of an additive function on different architectures.](images/FunctionsInMemory.png){ width=50% }
+![A comparison of an additive function on different architectures.](images/FunctionsInMemory.png){ width=65% }
 
 ## Instructions and Endian-ness
 
@@ -352,6 +354,177 @@ As non-zero integer values, both of them are equivalent to true, so `0x3C && 0x9
 
 Let's revisit our previous example, but instead use a bitwise and: `0x3C & 0x95`.
 
-![Result of `0x3C & 0x95`.](images/BitwiseAndExample.png){ width=75% }
+![Result of `0x3C & 0x95`.](images/BitwiseAndExample.png){ width=65% }
 
 *Omitted slide 37, Section 2.1.6, definitions of several bitwise operators.*
+
+## General Boolean Expressions
+
+### Question 4
+
+Given that
+
+$$ \text{A} = 49_{16} = 1001001_2$$
+
+and
+
+$$ \text{B} = 55_{16} = 1010101_2$$
+
+what are the results of `A&B`, `A|B`, `A^B`, and `~B`?
+
+Expression | Value |
+:-: | :-: |
+`A&B` | `0x41` |
+`A|B` | `0x5D` |
+`A^B` | `0x1C` |
+`~B` | `0xAA` |
+
+## Bitwise Expressions in C
+
+*File*: `question4.c`
+
+Consider the following C snippet:
+
+```c
+unsigned char A = 0x49;
+unsigned char B = 0x55;
+printf("0x%.2x\n", A&B);
+printf("0x%.2x\n", A|B);
+printf("0x%.2x\n", A^B);
+printf("0x%.2x\n", (unsigned char)~B);
+printf("0x%.2x\n", ~B);
+printf("0x%.2x\n", ~B & 0xFF);
+```
+
+The above snipped prints out
+
+```text
+0x41
+0x5d
+0x1c
+0xaa
+0xffffffaa
+0xaa
+```
+
+The value of `~B` printed out should give us pause. Why is do we need to mask out bits that don't exist in the `char` data type?
+
+Let's double check the data types after performing operations on them.
+
+```c
+unsigned char A = 0x49;
+unsigned char B = 0x55;
+printf("   A is %d Bytes\n", sizeof(A));
+printf("   B is %d Bytes\n", sizeof(B));
+printf(" A&B is %d Bytes\n", sizeof(A&B));
+printf(" A|B is %d Bytes\n", sizeof(A|B));
+printf(" A^B is %d Bytes\n", sizeof(A^B));
+printf("  ~B is %d Bytes\n", sizeof(~B));
+printf("A&&B is %d Bytes\n", sizeof(A&&B));
+printf("A||B is %d Bytes\n", sizeof(A||B));
+printf("  !B is %d Bytes\n", sizeof(!B));
+```
+
+When run, this prints out
+
+```text
+   A is 1 Bytes
+   B is 1 Bytes
+ A&B is 4 Bytes
+ A|B is 4 Bytes
+ A^B is 4 Bytes
+  ~B is 4 Bytes
+A&&B is 4 Bytes
+A||B is 4 Bytes
+  !B is 4 Bytes
+```
+
+Everything is an `int` now -- this is the result of *integer promotion*, which applies to all arithmetic operations on `char`s and `short`s.
+
+## Bitwise Masking
+
+*File*: `mask.c`
+
+### Turning bits on with `OR`
+
+Suppose that you have a `char` and you want to turn on bit 2 and bit 1 (remember, this is zero-indexed so we're not talking about bit 1 and bit 0). One way we can do this is with a mask and an `OR` operation:
+
+```c
+value  = 0x2A; // 00101010
+mask   = 0x06; // 00000110
+value |= mask; // 00101110
+```
+
+### Turning bits off with `AND`
+
+Suppose that you have a `char` and you want to turn off bit 2 and bit 1. We can do this with a mask and an `AND` operation.
+
+```c
+value  = 0x2A; // 00101010
+mask   = ~0x6; // 11111001
+value &= mask; // 00101000
+```
+
+### Toggling bits with `XOR`
+
+Suppose that you have a `char` and you want to toggle (flip) whatever bit 2 and bit 1 are. We can do this with a mask and an `XOR` operation.
+
+```c
+value  = 0x2A; // 00101010
+mask   = 0x06; // 00000110
+value ^= mask; // 00101100
+```
+
+## Shift Operations
+
+C lets you shift bits within data types left (`<<`) or right (`>>`).
+
+However, according to the standard (§6.5.7):
+
+> The integer promotions are performed on each of the operands. The type of the result is that of the promoted left operand. If the value of the right operand is negative or is greater than or equal to the width of the promoted left operand, the behavior is undefined.
+>
+> The result of `E1 << E2` is `E1` left-shifted `E2` bit positions; vacated bits are filled with zeros. If `E1` has an unsigned type, the value of the result is `E1` $\times$ `2`$^\text{E2}$, reduced modulo one more than the maximum value representable in the result type. If `E1` has a signed type and nonnegative value, and `E1` $\times$ `2`$^\text{E2}$ is representable in the result type, then that is the resulting value; otherwise, the behavior is undefined.
+>
+> The result of `E1 >> E2` is `E1` right-shifted `E2` bit positions. If `E1` has an unsigned type or if `E1` has a signed type and a nonnegative value, the value of the result is the integral part of the quotient of `E1 / 2`$^\text{E2}$. If `E1` has a signed type and a negative value, the resulting value is implementation-defined.
+
+### Left Shift
+
+![An example of C's left shift.](images/LeftShift.png){ width=65% }
+
++ Shifts the bits in a value `x` to the left by `k` bits
++ Fills in with zeros on the right
++ Shifting $\omega$-bit value `x` left by `k` is the same as $(x\times 2^k) \mod (2^\omega)$
+
+### Logical Right Shift
+
++ Used with unsigned integer types
++ Shifting $\omega$-bit value `x` right by `k` is the same as $\lfloor \frac{x}{2^k}\rfloor$
+
+![An example of C's logical right shift.](images/LogicalRightShift.png){ width=65% }
+
+### Arithmetic Right Shift
+
++ Used with signed integer types
++ Shifting $\omega$-bit value `x` right by `k` is the same as $\lfloor \frac{x}{2^k}\rfloor$ *in two's complement*
+
+![An example of C's arithmetic right shift.](images/ArithmeticRightShift.png){ width=65% }
+
+## Example: Representing Sets
+
+We can use bitwise operations to represent sets
+
+Set | 7   | 6   | 5   | 4   | 3   | 2   | 1   | 0   |
+:-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+$A$ | 0 | 1 | 1 | 0 | 1 | 0 | 0 | 1 |
+$B$ | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 |
+
+We can interpret this as $A = \{0, 3, 5, 6\}$ and $B = \{0, 2, 4, 6 \}$.
+
+There are some nice translations between bitwise operators and operations on sets.
+
+Expression | Result   | Set members |
+-:        | :-:      | :-         |
+`A&B`      | `01000001` | $\{0, 6\}$  |
+`A|B`      | `01111101` | $\{0, 2, 3, 4, 5, 6\}$ |
+`A^B`      | `00111100` | $\{2, 3, 4, 5\}$ |
+`~B`       | `10101010` | $\{1, 3, 5, 7\}$ |
