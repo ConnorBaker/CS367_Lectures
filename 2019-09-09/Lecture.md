@@ -1,5 +1,5 @@
 ---
-title: Data Representation I
+title: Data Representation II
 author: [Connor Baker]
 date: Compiled on \today\ at \currenttime
 subject: September 9, 2019 Lecture of CS 367
@@ -331,4 +331,196 @@ We can express the last one as a boolean statement in C:
 (u < 0 == v < 0) && (u < 0 != sum < 0)
 ```
 
+## Practice with Additions
 
+For each problem, is there an overflow? Consider the additions as both 4-bit unsigned integers and 4-bit signed integers.
+
+```text
+ 1001
++1011
+-----
+10100
+```
+
+As two unsigned integers, since there is a carry of one we have an unsigned overflow. As two signed integers, since both are negative and the sign of the sum is not the same (it is positive), we have a signed overflow.
+
+```text
+ 1001
++0111
+-----
+10000
+```
+
+As two unsigned integers, since there is a carry of one we have an unsigned overflow. As two signed integers, since the signs of the summands are different we cannot have a signed overflow.
+
+## Integer Addition -- Summary
+
+Addition is applied at the bit-level, regardless of whether the integral data type is signed or unsigned. The only difference is in how we detect overflows:
+
++ Unsigned Integral Types
+  + Overflow $\iff$ carry bit is one
++ Signed Integral Types
+  + Overflow $\iff$ the sign of the summands are the same and the sign of sum does not match the sign of the summands
+    + Corollary: if the summands are different signs we will never have an overflow
+
+## Shift Operations
+
+C lets you shift bits within data types left (`<<`) or right (`>>`).
+
+However, according to the standard (§6.5.7):
+
+> The integer promotions are performed on each of the operands. The type of the result is that of the promoted left operand. If the value of the right operand is negative or is greater than or equal to the width of the promoted left operand, the behavior is undefined.
+>
+> The result of `E1 << E2` is `E1` left-shifted `E2` bit positions; vacated bits are filled with zeros. If `E1` has an unsigned type, the value of the result is `E1` $\times$ `2`$^\text{E2}$, reduced modulo one more than the maximum value representable in the result type. If `E1` has a signed type and nonnegative value, and `E1` $\times$ `2`$^\text{E2}$ is representable in the result type, then that is the resulting value; otherwise, the behavior is undefined.
+>
+> The result of `E1 >> E2` is `E1` right-shifted `E2` bit positions. If `E1` has an unsigned type or if `E1` has a signed type and a nonnegative value, the value of the result is the integral part of the quotient of `E1 / 2`$^\text{E2}$. If `E1` has a signed type and a negative value, the resulting value is implementation-defined.
+
+### Left shift
+
+![An example of C's left shift.](images/LeftShift.png){ width=65% }
+
++ Shifts the bits in a value `x` to the left by `k` bits
++ Fills in with zeros on the right
++ Shifting $\omega$-bit value `x` left by `k` is the same as $(x\times 2^k) \mod (2^\omega)$
+
+#### Without overflow
+
+Consider the case where we perform `0101 1011 << 1`:
+
+![An example of C's left shift without overflow.](images/LeftShiftWithoutOverflow.png){ width=65% }
+
+Arithmetically,
+
++ `0x5B` $= 91$
++ $91 \times 2^1 = 182$
++ $182 \mod 2^8 = 182$
++ $82 =$ `0xB6`
+
+There's no overflow because we don't lose any value-carrying bits.
+
+#### With overflow
+
+Consider the case where we perform `1011 0110 << 1`:
+
+![An example of C's left shift with overflow.](images/LeftShiftWithOverflow.png){ width=65% }
+
+Arithmetically,
+
++ `0xB6` $= 182$
++ $182 \times 2^1 = 364$
++ $364 \mod 2^8 = 108$
++ $108 =$ `0x6C`
+
+There's an overflow because we lose a value-carrying bit.
+
+### Power-of-2 multiplication by shifting
+
+Operation `u << k` gives you $u\times2^k$. This works for both signed and unsigned numbers.
+
+![Power-of-two multiplication by left shifting.](images/Pow2Mult.png){ width=70% }
+
+#### Question 5
+
+Express the following as sum or differences of the results of shifts.
+
++ `8u`
+  + `u << 3`
++ `24u`
+  + `(u << 5) - (u << 3)`
+  + `(u << 4) + (u << 3)`
+
+### Logical right shift
+
++ Used with unsigned integer types
++ Shifts in zeros from the left
++ Shifting $\omega$-bit value `x` right by `k` is the same as $\lfloor \frac{x}{2^k}\rfloor$
+
+Consider the case where we perform `0101 1010 >> 1`:
+
+![An example of C's logical right shift.](images/LogicalRightShift.png){ width=65% }
+
+Arithmetically,
+
++ `0x5A` $= 90$
++ $90 \div 2^1 = 45$
++ $\lfloor 45\rfloor = 45$
++ $45 =$ `0x2D`
+
+### Arithmetic right shift
+
++ Used with signed integer types
++ Shifts in copies of the MSB from the left
++ Shifting $\omega$-bit value `x` right by `k` is the same as $\lfloor \frac{x}{2^k}\rfloor$ *in two's complement*
+
+#### Positive signed integral
+
+Consider the case where we perform `0101 1010 >> 1`:
+
+![An example of C's arithmetic right shift on a positive signed integral type.](images/ArithmeticRightShiftPositive.png){ width=65% }
+
+Arithmetically,
+
++ `0x5A` $= 90$
++ $90 \div 2^1 = 45$
++ $\lfloor 45\rfloor = 45$
++ $45 =$ `0x2D`
+
+We see that it is equivalent to the logical right shift.
+
+#### Negative signed integral
+
+Consider the case where we perform `1101 1010 >> 1`:
+
+![An example of C's arithmetic right shift on a negative signed integral type.](images/ArithmeticRightShiftNegative.png){ width=65% }
+
+Arithmetically,
+
++ `0xDA` $= -38$
++ $-38 \div 2^1 = -19$
++ $\lfloor -19\rfloor = -19$
++ $-19 =$ `0xED
+
+*Omitted slide 52.*
+
+### Power-of-2 signed divide by shifting
+
+Operation `x >> k` gives you $\lfloor x \div 2^k \rfloor$.
+
+![Signed power-of-two division by right shifting.](images/Pow2SignedDiv.png){ width=70% }
+
+Examples:
+
++ `u/2`
+  + If `u = 3`, then `u >> 1` is equal to one, as expected
+  + If `u = -3`, then `u >> 1` is equal to $-2$ which isn't what we wanted. What happened?
+    + The floor function behaved as it was supposed to. We can think of it as rounding towards $-\infty$ instead of towards zero, which is what we want.
+    + Instead, we should use the *ceiling* function if our operand is negative.
+
+#### Fixing power-of-2 signed division by shifting
+
+We have two cases:
+
+1. $x$ divides evenly into $2^k$ in which case we have a remainder of zero
+2. $x$ does not divide evenly into $2^k$ in which case we have a remainder in the range of $[1, 2^k -1]$
+
+In the first case the division by shifting behaves as expected. In the second case it does not. Our goal is to add some value to $x$ before performing the division such that if we have a remainder (e.g. we fall into the second case) the sum of our added term and the remainder are large enough to bump the quotient up by one.
+
+We can achieve this effect by adding the largest possible remainder, $2^k - 1$, to $x$ before dividing. With this sum, if $x$ divides evenly we get $2^k - 1$ as a remainder. That remainder is effectively thrown away be the floor function. If $x$ does not divide evenly, then because the remainder is in $[1, 2^k -1]$ the sum of the remainder and $2^k - 1$ will always be equal to one after the floor function is applied.
+
+Our fix is then:
+  $$
+  \left\lfloor \frac{x+2^k - 1}{2^k} \right\rfloor = \left\lfloor \frac{x-1}{2^k}  + 1 \right\rfloor.
+  $$
+We can write this in C as
+
+```c
+(x + (1 << k) - 1) >> k;
+```
+
+Remember however that this fix is only for negative values, and that for all $x<0$ this is equivalent to $\lceil \frac{x}{2^k} \rceil$.
+
+We can see through the following two examples that our fix does indeed work (using $\lfloor (x+2^k - 1) \div 2^k \rfloor$):
+
+![Computing $-16 \div 8$ with right shifts.](images/RightShfitFixExampleOne.png){ width=50% }
+
+![Computing $-15 \div 8$ with right shifts.](images/RightShfitFixExampleTwo.png){ width=50% }
