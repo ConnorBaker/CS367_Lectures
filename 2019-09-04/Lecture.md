@@ -498,6 +498,7 @@ However, according to the standard (§6.5.7):
 ### Logical Right Shift
 
 + Used with unsigned integer types
++ Shifts in zeros from the left
 + Shifting $\omega$-bit value `x` right by `k` is the same as $\lfloor \frac{x}{2^k}\rfloor$
 
 ![An example of C's logical right shift.](images/LogicalRightShift.png){ width=65% }
@@ -505,6 +506,7 @@ However, according to the standard (§6.5.7):
 ### Arithmetic Right Shift
 
 + Used with signed integer types
++ Shifts in copies of the MSB from the left
 + Shifting $\omega$-bit value `x` right by `k` is the same as $\lfloor \frac{x}{2^k}\rfloor$ *in two's complement*
 
 ![An example of C's arithmetic right shift.](images/ArithmeticRightShift.png){ width=65% }
